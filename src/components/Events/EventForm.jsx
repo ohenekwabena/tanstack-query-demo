@@ -2,15 +2,15 @@ import { useState } from 'react';
 
 import ImagePicker from '../ImagePicker.jsx';
 import { useQuery } from '@tanstack/react-query';
-import { fetchSelectableImages } from '../../utils/http.js';
+import { fetchSelectableImages, queryClient } from '../../utils/http.js';
 import ErrorBlock from '../UI/ErrorBlock.jsx';
 
 export default function EventForm({ inputData, onSubmit, children }) {
   const [selectedImage, setSelectedImage] = useState(inputData?.image);
 
-  const {data, isPending, isError} = useQuery({
-    queryKey: ["event-image"],
-    queryFn: fetchSelectableImages
+  const {data, isPending, isError, error} = useQuery({
+    queryKey: ["event-images"],
+    queryFn: fetchSelectableImages,
   })
 
   function handleSelectImage(image) {
@@ -21,11 +21,14 @@ export default function EventForm({ inputData, onSubmit, children }) {
     event.preventDefault();
 
     const formData = new FormData(event.target);
-    const data = Object.fromEntries(formData);
+    const formInfo = Object.fromEntries(formData);
 
-    onSubmit({ ...data, image: selectedImage });
+    onSubmit({ ...formInfo, image: selectedImage });
+
   }
-
+  
+  console.log(data);
+  
   return (
     <form id="event-form" onSubmit={handleSubmit}>
       <p className="control">
@@ -40,7 +43,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
 
       <div className="control">
         {isPending && <p>Loading...</p>}
-        {isError && <ErrorBlock title="Failed to load selectable images" message="Please try again"/>}
+        {isError && <ErrorBlock title="Failed to load selectable images" message={error.info || "Please try again"}/>}
         {data && <ImagePicker
           images={data}
           onSelect={handleSelectImage}
